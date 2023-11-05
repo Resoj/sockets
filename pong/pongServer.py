@@ -10,17 +10,23 @@ import socket
 import threading
 
 
+# Handles Sending Info to Clients
+
+
+
+# Handles Received Client
 def handle_client(client_socket):
+
     while True:
         data = client_socket.recv(1024)
         if not data:
             break
-        
+        # Send message to every client
         response = "Server received: " + data.decode('utf-8')
         client.socket.send(response.encode('utf-8'))
     client_socket.close()
 
-host ="10.104.1.149"
+host ="10.107.4.230"
 port = 5050
 
 server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -30,10 +36,15 @@ server.listen(2)
 print(f"Server is listening on {host}:{port}")
 
 while True:
+
     client, addr = server.accept()
     print(f"Accepted connection from {addr[0]}:{addr[1]}")
     client_handler = threading.Thread(target=handle_client, args=(client,))
     client_handler.start()
+
+     
+
+
 # Use this file to write your server logic
 # You will need to support at least two clients
 # You will need to keep track of where on the screen (x,y coordinates) each paddle is, the score 

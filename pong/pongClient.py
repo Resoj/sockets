@@ -18,6 +18,8 @@ from assets.code.helperCode import *
 # to suit your needs.
 def playGame(screenWidth:int, screenHeight:int, playerPaddle:str, client:socket.socket) -> None:
     
+
+
     # Pygame inits
     pygame.mixer.pre_init(44100, -16, 2, 2048)
     pygame.init()
@@ -83,8 +85,12 @@ def playGame(screenWidth:int, screenHeight:int, playerPaddle:str, client:socket.
         # Your code here to send an update to the server on your paddle's information,
         # where the ball is and the current score.
         # Feel free to change when the score is updated to suit your needs/requirements
-        
-        
+
+        ballPos = (ball.rect.x, ball.rect.y)
+        score = (lScore, rScore)
+        frame = [ballPos, score]
+        client.send(frame.encode())
+
         # =========================================================================================
 
         # Update the player paddle and opponent paddle's location on the screen
@@ -145,6 +151,8 @@ def playGame(screenWidth:int, screenHeight:int, playerPaddle:str, client:socket.
         pygame.draw.rect(screen, WHITE, topWall)
         pygame.draw.rect(screen, WHITE, bottomWall)
         scoreRect = updateScore(lScore, rScore, screen, WHITE, scoreFont)
+        # Clearing 
+        pygame.display.update()
         pygame.display.update([topWall, bottomWall, ball, leftPaddle, rightPaddle, scoreRect, winMessage])
         clock.tick(60)
         
@@ -165,6 +173,7 @@ def playGame(screenWidth:int, screenHeight:int, playerPaddle:str, client:socket.
 # the screen width, height and player paddle (either "left" or "right")
 # If you want to hard code the screen's dimensions into the code, that's fine, but you will need to know
 # which client is which
+
 def joinServer(ip:str, port:str, errorLabel:tk.Label, app:tk.Tk) -> None:
     # Purpose:      This method is fired when the join button is clicked
     # Arguments:
@@ -176,11 +185,13 @@ def joinServer(ip:str, port:str, errorLabel:tk.Label, app:tk.Tk) -> None:
     # Create a socket and connect to the server
     # You don't have to use SOCK_STREAM, use what you think is best
     client = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-
-    client.connect(("10.104.1.149", 5050))
+    client.connect(("10.107.4.230", 5050))
     print("Connected!")
 
     # Get the required information from your server (screen width, height & player paddle, "left or "right)
+
+    client.send(frame.encode())
+
 
 
     # If you have messages you'd like to show the user use the errorLabel widget like so
@@ -225,9 +236,11 @@ def startScreen():
     app.mainloop()
 
 if __name__ == "__main__":
+
     startScreen()
     
     # Uncomment the line below if you want to play the game without a server to see how it should work
     # the startScreen() function should call playGame with the arguments given to it by the server this is
     # here for demo purposes only
+
     playGame(640, 480,"left",socket.socket(socket.AF_INET, socket.SOCK_STREAM))
