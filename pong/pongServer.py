@@ -9,22 +9,29 @@
 import socket
 import threading
 
+# Handles Received Client 
 
-# Handles Sending Info to Clients
+client_sockets = []
 
-
-
-# Handles Received Client
 def handle_client(client_socket):
-
     while True:
         data = client_socket.recv(1024)
         if not data:
             break
-        # Send message to every client
-        response = "Server received: " + data.decode('utf-8')
-        client.socket.send(response.encode('utf-8'))
+        print(f"Recieved data: {data.decode('utf-8')}")
+
+        for client in client_sockets:
+            if client != client_socket:
+                client.send(data)
     client_socket.close()
+
+
+
+
+    
+    #     response = "Server received: " + data.decode('utf-8')
+    #     client.socket.send(response.encode('utf-8'))
+    # client_socket.close()
 
 host ="10.107.4.230"
 port = 5050
@@ -38,6 +45,7 @@ print(f"Server is listening on {host}:{port}")
 while True:
 
     client, addr = server.accept()
+    client_sockets.append(client)
     print(f"Accepted connection from {addr[0]}:{addr[1]}")
     client_handler = threading.Thread(target=handle_client, args=(client,))
     client_handler.start()

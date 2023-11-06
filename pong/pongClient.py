@@ -10,6 +10,7 @@ import pygame
 import tkinter as tk
 import sys
 import socket
+import json
 
 from assets.code.helperCode import *
 
@@ -88,8 +89,14 @@ def playGame(screenWidth:int, screenHeight:int, playerPaddle:str, client:socket.
 
         ballPos = (ball.rect.x, ball.rect.y)
         score = (lScore, rScore)
-        frame = [ballPos, score]
-        client.send(frame.encode())
+
+        # Making the payload to send
+        message = {
+        "ballPos" : ballPos,
+        "score" : score
+        }
+
+        client.send(json.dumps(message).encode())
 
         # =========================================================================================
 
@@ -164,6 +171,10 @@ def playGame(screenWidth:int, screenHeight:int, playerPaddle:str, client:socket.
         # Send your server update here at the end of the game loop to sync your game with your
         # opponent's game
 
+
+        # WRITING CODE TO SEND SYNC TO SERVER 
+        # THIS SHOULD ALSO HANDLE IF THE CLIENTS GET OUT OF SYNC
+
         # =========================================================================================
 
 
@@ -188,9 +199,13 @@ def joinServer(ip:str, port:str, errorLabel:tk.Label, app:tk.Tk) -> None:
     client.connect(("10.107.4.230", 5050))
     print("Connected!")
 
-    # Get the required information from your server (screen width, height & player paddle, "left or "right)
+    # Get the required information from your server (screen width, height & player paddle, "left" or "right")
 
-    client.send(frame.encode())
+
+
+
+
+
 
 
 
