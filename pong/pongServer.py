@@ -41,10 +41,7 @@ def handle_client(client_socket):
         print(data, end="\n")        
         response = "Server received: " + data
         client_socket.send(response.encode('utf-8'))
-
-
-
-
+    client_socket.close()
 
 
 while True:

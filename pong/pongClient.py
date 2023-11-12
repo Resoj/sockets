@@ -10,6 +10,7 @@ import pygame
 import tkinter as tk
 import sys
 import socket
+import json
 
 from assets.code.helperCode import *
 
@@ -86,6 +87,7 @@ def playGame(screenWidth:int, screenHeight:int, playerPaddle:str, client:socket.
         # where the ball is and the current score.
         # Feel free to change when the score is updated to suit your needs/requirements
 
+<<<<<<< HEAD
     
         ballPos = str(ball.rect.x) + " " + str(ball.rect.y)
         score = str(lScore) + " " + str(rScore)
@@ -94,6 +96,18 @@ def playGame(screenWidth:int, screenHeight:int, playerPaddle:str, client:socket.
         client.sendto(ballPos.encode(),('localhost', 5050))
         client.sendto(score.encode(),('localhost', 5050))
 
+=======
+        ballPos = (ball.rect.x, ball.rect.y)
+        score = (lScore, rScore)
+
+        # Making the payload to send
+        message = {
+        "ballPos" : ballPos,
+        "score" : score
+        }
+
+        client.send(json.dumps(message).encode())
+>>>>>>> f417d626cce692a38d3d9b08ac204d6a5a94ca1e
 
         # =========================================================================================
 
@@ -185,6 +199,10 @@ def playGame(screenWidth:int, screenHeight:int, playerPaddle:str, client:socket.
 
 
 
+
+        # WRITING CODE TO SEND SYNC TO SERVER 
+        # THIS SHOULD ALSO HANDLE IF THE CLIENTS GET OUT OF SYNC
+
         # =========================================================================================
 
 
@@ -210,8 +228,17 @@ def joinServer(ip:str, port:str, errorLabel:tk.Label, app:tk.Tk) -> None:
     client.connect(("localhost", 5050))
     print("Connected!")
 
-    # Get the required information from your server (screen width, height & player paddle, "left or "right)
+    # Get the required information from your server (screen width, height & player paddle, "left" or "right")
 
+
+
+
+
+
+<<<<<<< HEAD
+=======
+
+>>>>>>> f417d626cce692a38d3d9b08ac204d6a5a94ca1e
 
 
     # If you have messages you'd like to show the user use the errorLabel widget like so
