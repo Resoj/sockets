@@ -86,10 +86,14 @@ def playGame(screenWidth:int, screenHeight:int, playerPaddle:str, client:socket.
         # where the ball is and the current score.
         # Feel free to change when the score is updated to suit your needs/requirements
 
-        ballPos = (ball.rect.x, ball.rect.y)
-        score = (lScore, rScore)
-        frame = [ballPos, score]
-        client.send(frame.encode())
+    
+        ballPos = str(ball.rect.x) + " " + str(ball.rect.y)
+        score = str(lScore) + " " + str(rScore)
+
+        # Send the frame to the server
+        client.sendto(ballPos.encode(),('localhost', 5050))
+        client.sendto(score.encode(),('localhost', 5050))
+
 
         # =========================================================================================
 
@@ -159,10 +163,27 @@ def playGame(screenWidth:int, screenHeight:int, playerPaddle:str, client:socket.
         # This number should be synchronized between you and your opponent.  If your number is larger
         # then you are ahead of them in time, if theirs is larger, they are ahead of you, and you need to
         # catch up (use their info)
+        if sync > 100:
+
+            sync = 0
+            print("Syncing")
+            client.sendto(str(lScore).encode(),('localhost', 5050))
+            client.sendto(str(rScore).encode(),('localhost', 5050))
         sync += 1
+
         # =========================================================================================
         # Send your server update here at the end of the game loop to sync your game with your
         # opponent's game
+         
+
+
+
+
+
+
+
+
+
 
         # =========================================================================================
 
@@ -185,12 +206,11 @@ def joinServer(ip:str, port:str, errorLabel:tk.Label, app:tk.Tk) -> None:
     # Create a socket and connect to the server
     # You don't have to use SOCK_STREAM, use what you think is best
     client = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-    client.connect(("10.107.4.230", 5050))
+
+    client.connect(("localhost", 5050))
     print("Connected!")
 
     # Get the required information from your server (screen width, height & player paddle, "left or "right)
-
-    client.send(frame.encode())
 
 
 
