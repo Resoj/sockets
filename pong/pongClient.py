@@ -10,7 +10,6 @@ import pygame
 import tkinter as tk
 import sys
 import socket
-import json
 
 from assets.code.helperCode import *
 
@@ -86,28 +85,23 @@ def playGame(screenWidth:int, screenHeight:int, playerPaddle:str, client:socket.
         # Your code here to send an update to the server on your paddle's information,
         # where the ball is and the current score.
         # Feel free to change when the score is updated to suit your needs/requirements
-
-<<<<<<< HEAD
+        #    
     
-        ballPos = str(ball.rect.x) + " " + str(ball.rect.y)
-        score = str(lScore) + " " + str(rScore)
+        # Send the paddle information to the server
+        paddlePos = str(leftPaddle.rect.x) + " " + str(leftPaddle.rect.y)
+        client.sendto(paddlePos.encode(),('localhost', 5050))
 
-        # Send the frame to the server
+        paddlePos = str(rightPaddle.rect.x) + " " + str(rightPaddle.rect.y)
+        client.sendto(paddlePos.encode(),('localhost', 5050))
+
+        # Send the ball information to the server
+        ballPos = str(ball.rect.x) + " " + str(ball.rect.y)
         client.sendto(ballPos.encode(),('localhost', 5050))
+
+        # Send the score to the server
+        score = str(lScore) + " " + str(rScore)
         client.sendto(score.encode(),('localhost', 5050))
 
-=======
-        ballPos = (ball.rect.x, ball.rect.y)
-        score = (lScore, rScore)
-
-        # Making the payload to send
-        message = {
-        "ballPos" : ballPos,
-        "score" : score
-        }
-
-        client.send(json.dumps(message).encode())
->>>>>>> f417d626cce692a38d3d9b08ac204d6a5a94ca1e
 
         # =========================================================================================
 
@@ -181,17 +175,20 @@ def playGame(screenWidth:int, screenHeight:int, playerPaddle:str, client:socket.
 
             sync = 0
             print("Syncing")
-            client.sendto(str(lScore).encode(),('localhost', 5050))
-            client.sendto(str(rScore).encode(),('localhost', 5050))
+            
+            
+
         sync += 1
 
         # =========================================================================================
         # Send your server update here at the end of the game loop to sync your game with your
         # opponent's game
-         
 
 
 
+        
+        
+    
 
 
 
@@ -224,21 +221,17 @@ def joinServer(ip:str, port:str, errorLabel:tk.Label, app:tk.Tk) -> None:
     # Create a socket and connect to the server
     # You don't have to use SOCK_STREAM, use what you think is best
     client = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-
     client.connect(("localhost", 5050))
     print("Connected!")
 
     # Get the required information from your server (screen width, height & player paddle, "left" or "right")
+    
+
+    
 
 
 
 
-
-
-<<<<<<< HEAD
-=======
-
->>>>>>> f417d626cce692a38d3d9b08ac204d6a5a94ca1e
 
 
     # If you have messages you'd like to show the user use the errorLabel widget like so
@@ -290,4 +283,4 @@ if __name__ == "__main__":
     # the startScreen() function should call playGame with the arguments given to it by the server this is
     # here for demo purposes only
 
-    playGame(640, 480,"left",socket.socket(socket.AF_INET, socket.SOCK_STREAM))
+   # playGame(640, 480,"left",socket.socket(socket.AF_INET, socket.SOCK_STREAM))

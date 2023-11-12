@@ -11,37 +11,34 @@ import threading
 
 input_list = []
 
+server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+
 # Handles Sending Info to Clients
 host ="localhost"
 port = 5050
 
-server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 
 server.bind((host, port))
 
-server.listen(2)
+server.listen(3)
 
 print(f"Server is listening on {host}:{port}")
 
 
 # Handles Received Client
-def handle_client(client_socket):
+def handle_client(connection):
 
     while True:
-        data = client_socket.recv(1024).decode()
-        if not data:
+        fromClient = connection.recv(1024).decode()
+        if not fromClient:
             break
         
-
-        for client in input_list:
-            if client != client_socket:
-                client.send(data.encode())
-
         # Send message to every client
-        print(data, end="\n")        
-        response = "Server received: " + data
-        client_socket.send(response.encode('utf-8'))
-    client_socket.close()
+        print(fromClient , end="\n")        
+        response = "Server received: " + fromClient
+        print("sending: ", response)
+        connection.send(response.encode('utf-8'))
+    connection.close()
 
 
 while True:
@@ -51,11 +48,15 @@ while True:
 
     print(f"Accepted connection from", clientaddr)
 
+
+
     input_list.append(client)
 
     client_handler = threading.Thread(target=handle_client, args=(client,))
 
     client_handler.start()
+
+    print("\n", client, " is threading")
 
 
 
