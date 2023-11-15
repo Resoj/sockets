@@ -175,11 +175,13 @@ def playGame(screenWidth:int, screenHeight:int, playerPaddle:str, client:socket.
         # This number should be synchronized between you and your opponent.  If your number is larger
         # then you are ahead of them in time, if theirs is larger, they are ahead of you, and you need to
         # catch up (use their info)
-        if sync > 100:
+        if sync > 1:
 
             sync = 0
             print("Syncing")
-            
+            fromServer = client.recv(1024).decode()
+            print(fromServer)
+
         sync += 1
 
         # =========================================================================================
