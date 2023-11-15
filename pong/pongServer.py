@@ -17,6 +17,7 @@ server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 host ="localhost"
 port = 5050
 
+inputList = []
 
 server.bind((host, port))
 
@@ -43,11 +44,16 @@ def handle_client(connection):
         else:
             
             parsedData = fromClient.split(',')
-
             # PaddlePosL, PaddlePosR, ballPos, score, sync
-            print(parsedData[0])
 
+            if connection == inputList[0]:
 
+                print("\nfrom Connection 1")
+                print(parsedData[-1])
+            if connection == inputList[1]:
+                print("\nfrom Connection 2")
+                print(parsedData[-1])
+            
 
 
 
@@ -65,6 +71,8 @@ while True:
     client, clientaddr = server.accept()
 
     print(f"Accepted connection from", clientaddr)
+
+    inputList.append(client)
 
     client_handler = threading.Thread(target=handle_client, args=(client,))
 
