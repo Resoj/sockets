@@ -88,20 +88,24 @@ def playGame(screenWidth:int, screenHeight:int, playerPaddle:str, client:socket.
         #    
     
         # Send the paddle information to the server
-        paddlePos = str(leftPaddle.rect.x) + " " + str(leftPaddle.rect.y)
-        client.sendto(paddlePos.encode(),('localhost', 5050))
+        paddlePosL = str(leftPaddle.rect.x) + "," + str(leftPaddle.rect.y)
+        # client.sendto(paddlePos.encode(),('localhost', 5050))
 
-        paddlePos = str(rightPaddle.rect.x) + " " + str(rightPaddle.rect.y)
-        client.sendto(paddlePos.encode(),('localhost', 5050))
+        paddlePosR = str(rightPaddle.rect.x) + "," + str(rightPaddle.rect.y)
+        # client.sendto(paddlePos.encode(),('localhost', 5050))
 
         # Send the ball information to the server
-        ballPos = str(ball.rect.x) + " " + str(ball.rect.y)
-        client.sendto(ballPos.encode(),('localhost', 5050))
+        ballPos = str(ball.rect.x) + "," + str(ball.rect.y)
+        # client.sendto(ballPos.encode(),('localhost', 5050))
 
         # Send the score to the server
-        score = str(lScore) + " " + str(rScore)
-        client.sendto(score.encode(),('localhost', 5050))
+        score = str(lScore) + "," + str(rScore)
+        # client.sendto(score.encode(),('localhost', 5050))
+        message = paddlePosL + "," + paddlePosR + "," + ballPos + "," + score + "," + str(sync)
 
+        client.sendto(message.encode(),('localhost', 5050))
+
+       
 
         # =========================================================================================
 
@@ -176,8 +180,6 @@ def playGame(screenWidth:int, screenHeight:int, playerPaddle:str, client:socket.
             sync = 0
             print("Syncing")
             
-            
-
         sync += 1
 
         # =========================================================================================
@@ -222,22 +224,16 @@ def joinServer(ip:str, port:str, errorLabel:tk.Label, app:tk.Tk) -> None:
     # You don't have to use SOCK_STREAM, use what you think is best
     client = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     client.connect(("localhost", 5050))
-    print("Connected!")
+    print("Connected to ", socket.gethostname(), " on port ", port)
 
     # Get the required information from your server (screen width, height & player paddle, "left" or "right")
-    
-
-    
-
-
-
-
-
-
-    # If you have messages you'd like to show the user use the errorLabel widget like so
-    errorLabel.config(text=f"Some update text. You input: IP: {ip}, Port: {port}")
+    message = client.recv(1024)
+    if message:
+        print(message.decode())
+    else:
+        errorLabel.config(text=f"Some update text. You input: IP: {ip}, Port: {port}")
     # You may or may not need to call this, depending on how many times you update the label
-    errorLabel.update()     
+        errorLabel.update()     
 
     # Close this window and start the game with the info passed to you from the server
     app.withdraw()     # Hides the window (we'll kill it later)

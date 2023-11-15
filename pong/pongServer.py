@@ -9,7 +9,7 @@
 import socket
 import threading
 
-input_list = []
+
 
 server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 
@@ -24,20 +24,38 @@ server.listen(3)
 
 print(f"Server is listening on {host}:{port}")
 
-
 # Handles Received Client
 def handle_client(connection):
 
+    print("sending to client at ", connection.getsockname(), "on port ", port,)
+
     while True:
+ 
+        # Send message to client
+        
+
+        toClient = connection.send("Welcome to the server".encode())
+
+        # Receive message from client
         fromClient = connection.recv(1024).decode()
         if not fromClient:
             break
+        else:
+            
+            parsedData = fromClient.split(',')
+
+            # PaddlePosL, PaddlePosR, ballPos, score, sync
+            print(parsedData[0])
+
+
+
+
+
+
         
         # Send message to every client
-        print(fromClient , end="\n")        
-        response = "Server received: " + fromClient
-        print("sending: ", response)
-        connection.send(response.encode('utf-8'))
+        # response = "Server received: " + fromClient
+        connection.send(fromClient.encode('utf-8'))
     connection.close()
 
 
@@ -47,10 +65,6 @@ while True:
     client, clientaddr = server.accept()
 
     print(f"Accepted connection from", clientaddr)
-
-
-
-    input_list.append(client)
 
     client_handler = threading.Thread(target=handle_client, args=(client,))
 
