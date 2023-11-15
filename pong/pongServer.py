@@ -35,10 +35,11 @@ def handle_client(connection):
         # Send message to client
         
 
-        toClient = connection.send("Welcome to the server".encode())
+        toClient = connection.send(str(len(inputList)).encode())
 
         # Receive message from client
         fromClient = connection.recv(1024).decode()
+        print("received from client: ", fromClient)
         if not fromClient:
             break
         else:
@@ -46,18 +47,25 @@ def handle_client(connection):
             parsedData = fromClient.split(',')
             # PaddlePosL, PaddlePosR, ballPos, score, sync
 
+            # Conncection 1
             if connection == inputList[0]:
-                print("\nfrom Connection 1")
-                print(parsedData[-1])
+                # print("\nfrom Connection 1")
+                # print(parsedData[-1])
                 syncs[0] = int(parsedData[-1])
+            # Conncection 2
             if connection == inputList[1]:
-                print("\nfrom Connection 2")
-                print(parsedData[-1])
+                # print("\nfrom Connection 2")
+                # print(parsedData[-1])
                 syncs[1] = int(parsedData[-1])
             
             if syncs[0] == 0 and syncs[1] == 0:
                 continue
+            
             if syncs[0] > syncs[1]:
+                # Update with data from connection 2
+                inputList[1].send(fromClient.encode('utf-8'))
+
+            if syncs[0] < syncs[1]:
                 # Update with data from connection 1
                 inputList[0].send(fromClient.encode('utf-8'))
 

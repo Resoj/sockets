@@ -13,6 +13,9 @@ import socket
 
 from assets.code.helperCode import *
 
+pad = ""
+
+
 # This is the main game loop.  For the most part, you will not need to modify this.  The sections
 # where you should add to the code are marked.  Feel free to change any part of this project
 # to suit your needs.
@@ -86,12 +89,21 @@ def playGame(screenWidth:int, screenHeight:int, playerPaddle:str, client:socket.
         # where the ball is and the current score.
         # Feel free to change when the score is updated to suit your needs/requirements
         #    
-    
+
+
+        # packet = {}
+
+        # packet["leftPos"] = (leftPaddle.rect.x, leftPaddle.rect.y)
+        # packet["rightPos"] = (rightPaddle.rect.x, rightPaddle.rect.y)
+        # packet["ballPos"] = (ball.rect.x, ball.rect.y)
+        # packet["score"] = (lScore,rScore)
+        # packet["sync"] = sync
+
         # Send the paddle information to the server
-        paddlePosL = str(leftPaddle.rect.x) + "," + str(leftPaddle.rect.y)
+        paddlePosL = str(leftPaddle.rect.y)
         # client.sendto(paddlePos.encode(),('localhost', 5050))
 
-        paddlePosR = str(rightPaddle.rect.x) + "," + str(rightPaddle.rect.y)
+        paddlePosR = str(rightPaddle.rect.y)
         # client.sendto(paddlePos.encode(),('localhost', 5050))
 
         # Send the ball information to the server
@@ -99,10 +111,11 @@ def playGame(screenWidth:int, screenHeight:int, playerPaddle:str, client:socket.
         # client.sendto(ballPos.encode(),('localhost', 5050))
 
         # Send the score to the server
-        score = str(lScore) + "," + str(rScore)
+        score = str(lScore) + " ,  " + str(rScore)
         # client.sendto(score.encode(),('localhost', 5050))
         message = paddlePosL + "," + paddlePosR + "," + ballPos + "," + score + "," + str(sync)
 
+        print("sending: ", message)
         client.sendto(message.encode(),('localhost', 5050))
 
        
@@ -177,29 +190,33 @@ def playGame(screenWidth:int, screenHeight:int, playerPaddle:str, client:socket.
         # catch up (use their info)
         if sync > 1:
 
+
+
+
             sync = 0
             print("Syncing")
             fromServer = client.recv(1024).decode()
-            print(fromServer)
+            # print(fromServer)
 
+            if pad == "left":
+                paddle.rect.y = int(fromServer.split(",")[0])
+
+            elif pad == "right":
+                paddle.rect.y = int(fromServer.split(",")[1])
+
+            ball.rect.x = int(fromServer.split(",")[2])
+            ball.rect.y = int(fromServer.split(",")[3])
+            lScore = int(fromServer.split(",")[4])
+            rScore = int(fromServer.split(",")[5])    
+            
         sync += 1
+       
 
         # =========================================================================================
         # Send your server update here at the end of the game loop to sync your game with your
         # opponent's game
 
-
-
         
-        
-    
-
-
-
-
-
-
-
 
         # WRITING CODE TO SEND SYNC TO SERVER 
         # THIS SHOULD ALSO HANDLE IF THE CLIENTS GET OUT OF SYNC
@@ -231,7 +248,7 @@ def joinServer(ip:str, port:str, errorLabel:tk.Label, app:tk.Tk) -> None:
     # Get the required information from your server (screen width, height & player paddle, "left" or "right")
     message = client.recv(1024)
     if message:
-        print(message.decode())
+        print("MESSAGE: ", message.decode())
     else:
         errorLabel.config(text=f"Some update text. You input: IP: {ip}, Port: {port}")
     # You may or may not need to call this, depending on how many times you update the label
@@ -239,7 +256,15 @@ def joinServer(ip:str, port:str, errorLabel:tk.Label, app:tk.Tk) -> None:
 
     # Close this window and start the game with the info passed to you from the server
     app.withdraw()     # Hides the window (we'll kill it later)
-    playGame(640, 480, "left", client)  # User will be either left or right paddle
+
+    
+    if int(message) == 1: 
+        pad = "left"
+        playGame(640, 480, pad, client)  # User will be either left or right paddle
+    elif int(message) == 2:
+        pad = "right"
+        playGame(640, 480, pad, client)  # User will be either
+
     app.quit()         # Kills the window
 
 
