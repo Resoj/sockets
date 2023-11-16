@@ -21,6 +21,7 @@ pad = ""
 # to suit your needs.
 def playGame(screenWidth:int, screenHeight:int, playerPaddle:str, client:socket.socket) -> None:
     
+    seqNum = 0
 
 
     # Pygame inits
@@ -88,40 +89,33 @@ def playGame(screenWidth:int, screenHeight:int, playerPaddle:str, client:socket.
         # Your code here to send an update to the server on your paddle's information,
         # where the ball is and the current score.
         # Feel free to change when the score is updated to suit your needs/requirements
-        #    
-
-
-        # packet = {}
-
-        # packet["leftPos"] = (leftPaddle.rect.x, leftPaddle.rect.y)
-        # packet["rightPos"] = (rightPaddle.rect.x, rightPaddle.rect.y)
-        # packet["ballPos"] = (ball.rect.x, ball.rect.y)
-        # packet["score"] = (lScore,rScore)
-        # packet["sync"] = sync
-
+    
         if playerPaddle == "left": 
         # Send the paddle information to the server
             paddlePosL = str(playerPaddleObj.rect.y)
             paddlePosR = str(opponentPaddleObj.rect.y)
+
         elif playerPaddle == "right":
             paddlePosR = str(playerPaddleObj.rect.y)
             paddlePosL = str(opponentPaddleObj.rect.y)
 
-        # client.sendto(paddlePos.encode(),('localhost', 5050))
-
-        # Send the ball information to the server
+        
         ballPos = str(ball.rect.x) + "," + str(ball.rect.y)
-        # client.sendto(ballPos.encode(),('localhost', 5050))
 
-        # Send the score to the server
         score = str(lScore) + " ,  " + str(rScore)
 
         strSync = str(sync)
-        # client.sendto(score.encode(),('localhost', 5050))
-        message = paddlePosL + "," + paddlePosR + "," + ballPos + "," + score + "," + strSync
+        
+        message = paddlePosL + "," + paddlePosR + "," + ballPos + "," + score + "," + playerPaddle + ',' + str(seqNum) + "," + strSync  
 
-        print("sending: ", message)
-        client.sendto(message.encode('utf-8'),('localhost', 5050))
+        seqNum += 1
+
+
+        if sync > 1:
+            print("sending: ", message)
+            messageToSend = message + "\n"
+            client.sendto(messageToSend.encode('utf-8'),('localhost', 5050))
+
 
        
 
@@ -193,11 +187,22 @@ def playGame(screenWidth:int, screenHeight:int, playerPaddle:str, client:socket.
         # This number should be synchronized between you and your opponent.  If your number is larger
         # then you are ahead of them in time, if theirs is larger, they are ahead of you, and you need to
         # catch up (use their info)
+
         if sync > 0:
 
             sync = 0
+
             print("Syncing")
+
             fromServer = client.recv(1024).decode()
+
+            if fromServer:
+                print("fromServer: ", fromServer)
+                # print("Sending ACK")
+                # client.send("ACK".encode('utf-8'))
+            else:
+                print("Debug: No data from Server")
+                return
             fromServer = fromServer.split(",")
             if playerPaddle == "left":
                 playerPaddleObj.rect.y = int(fromServer[0])
@@ -248,13 +253,23 @@ def joinServer(ip:str, port:str, errorLabel:tk.Label, app:tk.Tk) -> None:
     # Create a socket and connect to the server
     # You don't have to use SOCK_STREAM, use what you think is best
     client = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+
     client.connect(("localhost", 5050))
+
     print("Connected to ", socket.gethostname(), " on port ", port)
 
-    # Get the required information from your server (screen width, height & player paddle, "left" or "right")
+
+    ack = client.recv(1024).decode('utf-8')
+    if ack == "ACK":
+        print("Received first ACK, establishing handshake")
+        client.send("ACK".encode('utf-8'))
+        
+    # 1 OR 2
     message = client.recv(1024)
+
     if message:
         print("MESSAGE: ", message.decode())
+
     else:
         errorLabel.config(text=f"Some update text. You input: IP: {ip}, Port: {port}")
     # You may or may not need to call this, depending on how many times you update the label
@@ -263,7 +278,6 @@ def joinServer(ip:str, port:str, errorLabel:tk.Label, app:tk.Tk) -> None:
     # Close this window and start the game with the info passed to you from the server
     app.withdraw()     # Hides the window (we'll kill it later)
 
-    
     if int(message) == 1: 
         pad = "left"
         playGame(640, 480, pad, client)  # User will be either left or right paddle

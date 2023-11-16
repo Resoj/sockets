@@ -24,78 +24,104 @@ server.bind((host, port))
 server.listen(3)
 
 print(f"Server is listening on {host}:{port}")
+
 syncs = [0,0]
+
 # Handles Received Client
 def handle_client(connection):
 
     print("sending to client at ", connection.getsockname(), "on port ", port,)
-
+    # INITIAL MESSAGE FOR CLIENT NUMBER
+    toClient = connection.send(str(len(inputList)).encode('utf-8'))
+    
     while True:
- 
-        # Send message to client
-        
-
-        toClient = connection.send(str(len(inputList)).encode('utf-8'))
 
         # Receive message from client
         fromClient = connection.recv(1024).decode('utf-8').split("\n")
         # print(len(fromClient.split(",")))
 
         fromClient = fromClient[0]
+
         print("received from client: ", fromClient)
         if not fromClient:
             break
+        
         else:
-            
             parsedData = fromClient.split(",")
             # PaddlePosL, PaddlePosR, ballPos, score, sync
 
             # Conncection 1
             if connection == inputList[0]:
-                # print("\nfrom Connection 1")
-                # print(parsedData[-1])
+
+                print(" \n Connection 1 is sending info")
                 syncs[0] = int(parsedData[-1])
             # Conncection 2
             if connection == inputList[1]:
-                # print("\nfrom Connection 2")
-                # print(parsedData[-1])
+
+                print(" \n Connection 2 is sending info")
                 syncs[1] = int(parsedData[-1])
             
             if syncs[0] == 0 and syncs[1] == 0:
-                continue
+                print("Both are zero")
             
             if syncs[0] > syncs[1]:
                 # Update with data from connection 2
-                inputList[1].send(fromClient.encode('utf-8'))
+                print("Client 1 has a higher sync")
+                inputList[1].sendall(fromClient[0].encode('utf-8'))
+                
 
             if syncs[0] < syncs[1]:
                 # Update with data from connection 1
-                inputList[0].send(fromClient.encode('utf-8'))
+                print("Client 2 has a higher sync")
+                inputList[0].sendall(fromClient[0].encode('utf-8'))
+                
 
 
 
-
-        
-        # Send message to every client
-        # response = "Server received: " + fromClient
-        connection.send(fromClient.encode('utf-8'))
+        # for other_client in inputList:
+        #         if other_client[0] != connection:
+        #             print("sending: ", parsedData, " to ", other_client[1])
+        #             other_client[0].send(parsedData.encode())
+     
+        # connection.send(fromClient.encode('utf-8'))
     connection.close()
 
-
+ackCounter = 1
 while True:
 
-    
     client, clientaddr = server.accept()
 
     print(f"Accepted connection from", clientaddr)
 
-    inputList.append(client)
+    inputList.append([client,clientaddr, len(inputList)])
 
-    client_handler = threading.Thread(target=handle_client, args=(client,))
+    print("Sending First ACK")
 
-    client_handler.start()
+    client.send("ACK".encode('utf-8'))
+    
 
-    print("\n", client, " is threading")
+    print("Waiting for HandShake")
+
+    acknowledgment = client.recv(1024).decode('utf-8')
+
+    if acknowledgment == "ACK":
+        print("Received ACK", ackCounter)
+
+        if ackCounter < 3:
+
+            ackCounter += 1
+
+    print("Sending Client Number")
+    message = str(len(inputList)) + "\n"
+    client.send(message.encode('utf-8'))
+
+    if len(inputList) == 2:
+
+        print("Starting Thread")
+
+        client_handler = threading.Thread(target=handle_client, args=(client,clientaddr))
+
+        client_handler.start()
 
 
 
