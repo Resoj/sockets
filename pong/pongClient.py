@@ -99,11 +99,14 @@ def playGame(screenWidth:int, screenHeight:int, playerPaddle:str, client:socket.
         # packet["score"] = (lScore,rScore)
         # packet["sync"] = sync
 
+        if playerPaddle == "left": 
         # Send the paddle information to the server
-        paddlePosL = str(leftPaddle.rect.y)
-        # client.sendto(paddlePos.encode(),('localhost', 5050))
+            paddlePosL = str(playerPaddleObj.rect.y)
+            paddlePosR = str(opponentPaddleObj.rect.y)
+        elif playerPaddle == "right":
+            paddlePosR = str(playerPaddleObj.rect.y)
+            paddlePosL = str(opponentPaddleObj.rect.y)
 
-        paddlePosR = str(rightPaddle.rect.y)
         # client.sendto(paddlePos.encode(),('localhost', 5050))
 
         # Send the ball information to the server
@@ -112,11 +115,13 @@ def playGame(screenWidth:int, screenHeight:int, playerPaddle:str, client:socket.
 
         # Send the score to the server
         score = str(lScore) + " ,  " + str(rScore)
+
+        strSync = str(sync)
         # client.sendto(score.encode(),('localhost', 5050))
-        message = paddlePosL + "," + paddlePosR + "," + ballPos + "," + score + "," + str(sync)
+        message = paddlePosL + "," + paddlePosR + "," + ballPos + "," + score + "," + strSync
 
         print("sending: ", message)
-        client.sendto(message.encode(),('localhost', 5050))
+        client.sendto(message.encode('utf-8'),('localhost', 5050))
 
        
 
@@ -188,26 +193,27 @@ def playGame(screenWidth:int, screenHeight:int, playerPaddle:str, client:socket.
         # This number should be synchronized between you and your opponent.  If your number is larger
         # then you are ahead of them in time, if theirs is larger, they are ahead of you, and you need to
         # catch up (use their info)
-        if sync > 1:
-
-
-
+        if sync > 0:
 
             sync = 0
             print("Syncing")
             fromServer = client.recv(1024).decode()
-            # print(fromServer)
+            fromServer = fromServer.split(",")
+            if playerPaddle == "left":
+                playerPaddleObj.rect.y = int(fromServer[0])
+                opponentPaddleObj.rect.y = int(fromServer[1])
 
-            if pad == "left":
-                paddle.rect.y = int(fromServer.split(",")[0])
+            elif playerPaddle == "right":
 
-            elif pad == "right":
-                paddle.rect.y = int(fromServer.split(",")[1])
+                opponentPaddleObj.rect.y = int(fromServer[0])
+                playerPaddleObj.rect.y = int(fromServer[1])
+            else: 
+                continue
 
-            ball.rect.x = int(fromServer.split(",")[2])
-            ball.rect.y = int(fromServer.split(",")[3])
-            lScore = int(fromServer.split(",")[4])
-            rScore = int(fromServer.split(",")[5])    
+            ball.rect.x = int(fromServer[2])
+            ball.rect.y = int(fromServer[3])
+            lScore = int(fromServer[4])
+            rScore = int(fromServer[5])    
             
         sync += 1
        

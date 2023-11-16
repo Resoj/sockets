@@ -35,16 +35,19 @@ def handle_client(connection):
         # Send message to client
         
 
-        toClient = connection.send(str(len(inputList)).encode())
+        toClient = connection.send(str(len(inputList)).encode('utf-8'))
 
         # Receive message from client
-        fromClient = connection.recv(1024).decode()
+        fromClient = connection.recv(1024).decode('utf-8').split("\n")
+        # print(len(fromClient.split(",")))
+
+        fromClient = fromClient[0]
         print("received from client: ", fromClient)
         if not fromClient:
             break
         else:
             
-            parsedData = fromClient.split(',')
+            parsedData = fromClient.split(",")
             # PaddlePosL, PaddlePosR, ballPos, score, sync
 
             # Conncection 1
@@ -93,6 +96,7 @@ while True:
     client_handler.start()
 
     print("\n", client, " is threading")
+
 
 
 
