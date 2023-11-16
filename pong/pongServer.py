@@ -37,6 +37,7 @@ def handle_client(connection):
     while True:
 
         # Receive message from client
+        print("Looking for message from client")
         fromClient = connection.recv(1024).decode('utf-8').split("\n")
         # print(len(fromClient.split(",")))
 
@@ -53,28 +54,27 @@ def handle_client(connection):
             # Conncection 1
             if connection == inputList[0][0]:
 
-                print(" \n Connection 1 is sending info")
                 syncs[0] = int(parsedData[-1])
             # Conncection 2
             if connection == inputList[1][0]:
 
-                print(" \n Connection 2 is sending info")
                 syncs[1] = int(parsedData[-1])
             
             if syncs[0] == 0 and syncs[1] == 0:
+
                 print("Both are zero")
                 continue
 
             if syncs[0] > syncs[1]:
                 # Update with data from connection 2
-                print("Client 1 has a higher sync")
-                inputList[1][0].send(fromClient[0].encode('utf-8'))
+                print("Client1 has a higher sync sending: ", fromClient, "to", inputList[1][0])
+                inputList[0][1].sendall(fromClient.encode('utf-8'))
                 
 
             if syncs[0] < syncs[1]:
                 # Update with data from connection 1
-                print("Client 2 has a higher sync")
-                inputList[0][0].send(fromClient[0].encode('utf-8'))
+                print("Client 2 has a higher sync sending: ", fromClient, "to", inputList[0][0])
+                inputList[0][0].sendall(fromClient.encode('utf-8'))
                 
     connection.close()
 

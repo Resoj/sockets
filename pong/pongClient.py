@@ -111,7 +111,7 @@ def playGame(screenWidth:int, screenHeight:int, playerPaddle:str, client:socket.
 
         seqNum += 1
 
-            
+        client.send(message.encode('utf-8'))
 
 
        
@@ -194,13 +194,10 @@ def playGame(screenWidth:int, screenHeight:int, playerPaddle:str, client:socket.
 
             print("Waiting for Server Data")
             fromServer = client.recv(1024).decode('utf-8')
-            if fromServer:
-                print("fromServer: ", fromServer)
-                # print("Sending ACK")
-                # client.send("ACK".encode('utf-8'))
-            else:
-                print("Debug: No data from Server")
-                return
+            print("Received: ", fromServer)
+            # else:
+            #     print("Debug: No data from Server")
+            #     return
             fromServer = fromServer.split(",")
             if playerPaddle == "left":
                 playerPaddleObj.rect.y = int(fromServer[0])
