@@ -11,6 +11,7 @@ import tkinter as tk
 import sys
 import socket
 
+
 from assets.code.helperCode import *
 
 pad = ""
@@ -102,7 +103,7 @@ def playGame(screenWidth:int, screenHeight:int, playerPaddle:str, client:socket.
         
         ballPos = str(ball.rect.x) + "," + str(ball.rect.y)
 
-        score = str(lScore) + " ,  " + str(rScore)
+        score = str(lScore) + "," + str(rScore)
 
         strSync = str(sync)
         
@@ -110,11 +111,7 @@ def playGame(screenWidth:int, screenHeight:int, playerPaddle:str, client:socket.
 
         seqNum += 1
 
-
-        if sync > 1:
-            print("sending: ", message)
-            messageToSend = message + "\n"
-            client.sendto(messageToSend.encode('utf-8'),('localhost', 5050))
+            
 
 
        
@@ -184,18 +181,19 @@ def playGame(screenWidth:int, screenHeight:int, playerPaddle:str, client:socket.
         pygame.display.update([topWall, bottomWall, ball, leftPaddle, rightPaddle, scoreRect, winMessage])
         clock.tick(60)
         
-        # This number should be synchronized between you and your opponent.  If your number is larger
+        # This number should be synchronizedzxxAXsdasd between you and your opponent.  If your number is larger
         # then you are ahead of them in time, if theirs is larger, they are ahead of you, and you need to
         # catch up (use their info)
 
-        if sync > 0:
+        if sync > 1:
 
-            sync = 0
+            
+            print("sending: ", message)
+            messageToSend = message + "\n"
+            client.sendto(messageToSend.encode('utf-8'),('localhost', 5050))
 
-            print("Syncing")
-
-            fromServer = client.recv(1024).decode()
-
+            print("Waiting for Server Data")
+            fromServer = client.recv(1024).decode('utf-8')
             if fromServer:
                 print("fromServer: ", fromServer)
                 # print("Sending ACK")
@@ -219,6 +217,7 @@ def playGame(screenWidth:int, screenHeight:int, playerPaddle:str, client:socket.
             ball.rect.y = int(fromServer[3])
             lScore = int(fromServer[4])
             rScore = int(fromServer[5])    
+            sync = 0
             
         sync += 1
        
@@ -263,7 +262,7 @@ def joinServer(ip:str, port:str, errorLabel:tk.Label, app:tk.Tk) -> None:
     if ack == "ACK":
         print("Received first ACK, establishing handshake")
         client.send("ACK".encode('utf-8'))
-        
+
     # 1 OR 2
     message = client.recv(1024)
 
