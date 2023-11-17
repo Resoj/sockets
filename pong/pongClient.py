@@ -111,7 +111,10 @@ def playGame(screenWidth:int, screenHeight:int, playerPaddle:str, client:socket.
 
         seqNum += 1
 
-        client.send(message.encode('utf-8'))
+    
+        m = message + "\n"
+        # Send the message to the server
+        client.send(m.encode('utf-8'))
 
 
        

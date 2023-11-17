@@ -38,12 +38,13 @@ def handle_client(connection):
 
         # Receive message from client
         print("Looking for message from client")
-        fromClient = connection.recv(1024).decode('utf-8').split("\n")
+        fromClient = connection.recv(1024).decode('utf-8')
         # print(len(fromClient.split(",")))
 
-        fromClient = fromClient[0]
+        fromClient = fromClient.split("\n")[0]
 
         print("received from client: ", fromClient)
+
         if not fromClient:
             break
         
@@ -65,16 +66,23 @@ def handle_client(connection):
                 print("Both are zero")
                 continue
 
-            if syncs[0] > syncs[1]:
+            elif syncs[0] > syncs[1]:
                 # Update with data from connection 2
                 print("Client1 has a higher sync sending: ", fromClient, "to", inputList[1][0])
-                inputList[0][1].sendall(fromClient.encode('utf-8'))
-                
-
-            if syncs[0] < syncs[1]:
+                inputList[1][0].send(fromClient.encode('utf-8'))
+                                
+        
+            elif syncs[0] < syncs[1]:
                 # Update with data from connection 1
                 print("Client 2 has a higher sync sending: ", fromClient, "to", inputList[0][0])
-                inputList[0][0].sendall(fromClient.encode('utf-8'))
+                inputList[0][0].send(fromClient.encode('utf-8'))
+
+            else:
+                inputList[0][0].send(fromClient.encode('utf-8'))
+                inputList[1][0].send(fromClient.encode('utf-8'))
+
+
+                
                 
     connection.close()
 
@@ -105,6 +113,11 @@ while True:
     print("Sending client number: ", str(len(inputList)))
     toClient = client.send(str(len(inputList)).encode('utf-8'))
     
+    if len(inputList) == 1:
+        print("Starting First Thread")
+
+        client_handler1 = threading.Thread(target=handle_client, args=(client,)) 
+
 
     if len(inputList) == 2:
 
@@ -112,7 +125,9 @@ while True:
 
         client_handler = threading.Thread(target=handle_client, args=(client,))
 
+
         client_handler.start()
+        client_handler1.start()
 
 
 
