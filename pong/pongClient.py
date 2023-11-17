@@ -10,16 +10,18 @@ import pygame
 import tkinter as tk
 import sys
 import socket
+import time
+import threading
 
 from assets.code.helperCode import *
 
 pad = ""
-DEBUGMODE = False
-
+DEBUGMODE = True
+sync_locks = [threading.Lock(), threading.Lock()]
 # This is the main game loop.  For the most part, you will not need to modify this.  The sections
 # where you should add to the code are marked.  Feel free to change any part of this project
 # to suit your needs.
-def playGame(screenWidth:int, screenHeight:int, playerPaddle:str, client:socket.socket) -> None:
+def playGame(screenWidth:int, screenHeight:int, playerPaddle:str, client:socket.socket, sync_locks:threading.Lock()) -> None:
     
     seqNum = 0
 
@@ -110,11 +112,15 @@ def playGame(screenWidth:int, screenHeight:int, playerPaddle:str, client:socket.
 
         seqNum += 1
 
-    
         m = message + "\n"
 
-        # Send the message to the server
-        client.send(m.encode('utf-8'))
+        with sync_locks[0], sync_locks[1]: 
+            if sync > 2: 
+                print("Sending message to server")
+                client.send(m.encode('utf-8'))  
+                sync = 0
+
+            sync += 1
 
 
        
@@ -182,11 +188,12 @@ def playGame(screenWidth:int, screenHeight:int, playerPaddle:str, client:socket.
         # Clearing 
         pygame.display.update()
         pygame.display.update([topWall, bottomWall, ball, leftPaddle, rightPaddle, scoreRect, winMessage])
-        clock.tick(100)
+        clock.tick(60)
         
         # This number should be synchronizedzxxAXsdasd between you and your opponent.  If your number is larger
         # then you are ahead of them in time, if theirs is larger, they are ahead of you, and you need to
         # catch up (use their info)
+
 
         if sync > 1:
 
@@ -196,7 +203,7 @@ def playGame(screenWidth:int, screenHeight:int, playerPaddle:str, client:socket.
             client.sendto(messageToSend.encode('utf-8'),('localhost', 5050))
 
             if DEBUGMODE:
-                print("Waiting for Server Data")
+                print("Waiting for Server Data with sync of ", sync )
 
             fromServer = client.recv(1024).decode('utf-8')
             fromServer = fromServer.split("\n")[0]
@@ -219,10 +226,10 @@ def playGame(screenWidth:int, screenHeight:int, playerPaddle:str, client:socket.
             ball.rect.x = int(fromServer[2])
             ball.rect.y = int(fromServer[3])
             lScore = int(fromServer[4])
-            rScore = int(fromServer[5])    
-            sync = 0
-            
-        sync += 1
+            rScore = int(fromServer[5])  
+          
+
+       
        
 
         # =========================================================================================
@@ -256,7 +263,9 @@ def joinServer(ip:str, port:str, errorLabel:tk.Label, app:tk.Tk) -> None:
     # You don't have to use SOCK_STREAM, use what you think is best
     client = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 
-    client.connect(("localhost", 5050))
+    host = "localhost"
+    # host = "10.113.32.29"
+    client.connect((host, 5050))
 
     print("Connected to ", socket.gethostname(), " on port ", port)
 
@@ -284,10 +293,10 @@ def joinServer(ip:str, port:str, errorLabel:tk.Label, app:tk.Tk) -> None:
 
     if int(message) == 1: 
         pad = "left"
-        playGame(640, 480, pad, client)  # User will be either left or right paddle
+        playGame(640, 480, pad, client,sync_locks)  # User will be either left or right paddle
     elif int(message) == 2:
         pad = "right"
-        playGame(640, 480, pad, client)  # User will be either
+        playGame(640, 480, pad, client,sync_locks)  # User will be either
 
     app.quit()         # Kills the window
 

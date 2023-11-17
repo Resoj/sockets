@@ -10,25 +10,30 @@ import socket
 import threading
 import time
 
-sync_locks = threading.Lock()
+
 input_locks = threading.Lock()
 
 
 server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 
 # Handles Sending Info to Clients
-host ="localhost"
+# host ="10.113.32.29"
+host = "localhost"
 port = 5050
 
 inputList = []
-DEBUGMODE = False
+
+DEBUGMODE = True
+
 server.bind((host, port))
 
 server.listen(3)
+
 if DEBUGMODE:
     print(f"Server is listening on {host}:{port}")
 
-syncs = [0,0]
+sync_locks = [threading.Lock(), threading.Lock()]
+syns=[0,0]
 
 # Handles Received Client
 def handle_client(connection):
@@ -43,7 +48,6 @@ def handle_client(connection):
         if DEBUGMODE:
             print("Looking for message from client")
         fromClient = connection.recv(1024).decode('utf-8')
-        # print(len(fromClient.split(",")))
 
         fromClient = fromClient.split("\n")[0]
         if DEBUGMODE:
@@ -54,47 +58,63 @@ def handle_client(connection):
         
         else:
             parsedData = fromClient.split(",")
+
+            
+            # PaddlePosL, PaddlePosR, ballPos, score, syn
+
+    while True:
+        # Receive message from client
+        if DEBUGMODE:
+            print("Looking for message from client")
+        fromClient = connection.recv(1024).decode('utf-8')
+
+        fromClient = fromClient.split("\n")[0]
+        if DEBUGMODE:
+            print("received from client: ", fromClient)
+
+        if not fromClient:
+            break
+
+        else:
+            parsedData = fromClient.split(",")
+
             # PaddlePosL, PaddlePosR, ballPos, score, sync
 
-            # Conncection 1
+            # Connection 1
             if connection == inputList[0][0]:
-                with sync_locks:
+                with sync_locks[0]:
                     syncs[0] = int(parsedData[-1])
-            # Conncection 2
+
+            # Connection 2
             if connection == inputList[1][0]:
-                with sync_locks:
+                with sync_locks[1]:
                     syncs[1] = int(parsedData[-1])
-            
+
             if syncs[0] == 0 and syncs[1] == 0:
-                with sync_locks:
+                with sync_locks[0], sync_locks[1]:
                     if DEBUGMODE:
                         print("Both are zero")
                     continue
 
             elif syncs[0] > syncs[1]:
                 # Update with data from connection 2
-                if DEBUGMODE:
-                    print("Client1 has a higher sync sending: ", fromClient, "to", inputList[1][0])
+                fromClient += "\n"
+                with sync_locks[1]:
+                    inputList[1][0].send(fromClient.encode('utf-8'))
 
-                fromClient = fromClient + "\n"
-                inputList[1][0].send(fromClient.encode('utf-8'))
-                                
-        
             elif syncs[0] < syncs[1]:
                 # Update with data from connection 1
-                if DEBUGMODE:
-                    print("Client 2 has a higher sync sending: ", fromClient, "to", inputList[0][0])
-                fromClient = fromClient + "\n"
-                inputList[0][0].send(fromClient.encode('utf-8'))
+                fromClient += "\n"
+                with sync_locks[0]:
+                    inputList[0][0].send(fromClient.encode('utf-8'))
 
             else:
-                fromClient = fromClient + "\n"
-                inputList[0][0].send(fromClient.encode('utf-8'))
-                inputList[1][0].send(fromClient.encode('utf-8'))
+                # Update both connections
+                fromClient += "\n"
+                with sync_locks[0], sync_locks[1]:
+                    inputList[0][0].send(fromClient.encode('utf-8'))
+                    inputList[1][0].send(fromClient.encode('utf-8'))
 
-
-                
-                
     connection.close()
 
 ackCounter = 1
@@ -139,11 +159,6 @@ while True:
             client_handler = threading.Thread(target=handle_client, args=(client,))
             client_handler.start()
             client_handler1.start()
-
-
-
-
-
 
 
 # Use this file to write your server logic
