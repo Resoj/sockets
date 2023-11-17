@@ -11,11 +11,10 @@ import tkinter as tk
 import sys
 import socket
 
-
 from assets.code.helperCode import *
 
 pad = ""
-
+DEBUGMODE = False
 
 # This is the main game loop.  For the most part, you will not need to modify this.  The sections
 # where you should add to the code are marked.  Feel free to change any part of this project
@@ -113,6 +112,7 @@ def playGame(screenWidth:int, screenHeight:int, playerPaddle:str, client:socket.
 
     
         m = message + "\n"
+
         # Send the message to the server
         client.send(m.encode('utf-8'))
 
@@ -182,7 +182,7 @@ def playGame(screenWidth:int, screenHeight:int, playerPaddle:str, client:socket.
         # Clearing 
         pygame.display.update()
         pygame.display.update([topWall, bottomWall, ball, leftPaddle, rightPaddle, scoreRect, winMessage])
-        clock.tick(60)
+        clock.tick(100)
         
         # This number should be synchronizedzxxAXsdasd between you and your opponent.  If your number is larger
         # then you are ahead of them in time, if theirs is larger, they are ahead of you, and you need to
@@ -190,18 +190,21 @@ def playGame(screenWidth:int, screenHeight:int, playerPaddle:str, client:socket.
 
         if sync > 1:
 
-            
-            print("sending: ", message)
+            if DEBUGMODE:
+                print("sending: ", message)
             messageToSend = message + "\n"
             client.sendto(messageToSend.encode('utf-8'),('localhost', 5050))
 
-            print("Waiting for Server Data")
+            if DEBUGMODE:
+                print("Waiting for Server Data")
+
             fromServer = client.recv(1024).decode('utf-8')
-            print("Received: ", fromServer)
-            # else:
-            #     print("Debug: No data from Server")
-            #     return
+            fromServer = fromServer.split("\n")[0]
             fromServer = fromServer.split(",")
+
+            if DEBUGMODE:
+                print("Split Data: ", fromServer)
+
             if playerPaddle == "left":
                 playerPaddleObj.rect.y = int(fromServer[0])
                 opponentPaddleObj.rect.y = int(fromServer[1])
@@ -260,13 +263,15 @@ def joinServer(ip:str, port:str, errorLabel:tk.Label, app:tk.Tk) -> None:
 
     ack = client.recv(1024).decode('utf-8')
     if ack == "ACK":
-        print("Received first ACK, establishing handshake")
+        if DEBUGMODE:
+            print("Received first ACK, establishing handshake")
         client.send("ACK".encode('utf-8'))
 
     # 1 OR 2
     message = client.recv(1024)
 
-    if message:
+    if message and DEBUGMODE:
+
         print("MESSAGE: ", message.decode())
 
     else:
