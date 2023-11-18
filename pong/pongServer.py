@@ -10,145 +10,110 @@ import socket
 import threading
 import time
 
+# Lock Setup
+input_locks = [threading.Lock(), threading.Lock()]
+sync_locks = [threading.Lock(), threading.Lock()]
+syncs = [0,0]
 
-input_locks = threading.Lock()
-
-
+# Initial Socket Setup
 server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 
-# Handles Sending Info to Clients
+# Hosts and Ports
 # host ="10.113.32.29"
 host = "localhost"
 port = 5050
 
+# client and client address storage
 inputList = []
 
+# Mode for Debugging ( lessens printing in console)
 DEBUGMODE = True
 
 server.bind((host, port))
-
 server.listen(3)
 
 if DEBUGMODE:
     print(f"Server is listening on {host}:{port}")
 
-sync_locks = [threading.Lock(), threading.Lock()]
-syns=[0,0]
-
-# Handles Received Client
 def handle_client(connection):
+    # Purpose : to handle client threads
+
     if DEBUGMODE:
         print("sending to client at ", connection.getsockname(), "on port ", port)
 
-    # INITIAL MESSAGE FOR CLIENT NUMBER
-    
+    # Main Client loop
     while True:
 
-        # Receive message from client
         if DEBUGMODE:
             print("Looking for message from client")
-        fromClient = connection.recv(1024).decode('utf-8')
 
-        fromClient = fromClient.split("\n")[0]
-        if DEBUGMODE:
-            print("received from client: ", fromClient)
-
-        if not fromClient:
-            break
-        
-        else:
-            parsedData = fromClient.split(",")
-
+        # Parsing operations
+        with input_locks[0]:
             
-            # PaddlePosL, PaddlePosR, ballPos, score, syn
+            fromClient1 = connection.recv(1024).decode('utf-8')
+            fromClient1 = fromClient1.split("\n")[0]
+        
+            print("Received from client: ", fromClient1, "\n")
 
-    while True:
-        # Receive message from client
-        if DEBUGMODE:
-            print("Looking for message from client")
-        fromClient = connection.recv(1024).decode('utf-8')
+        # with input_locks[1]:
+        #     fromClient2 = connection.recv(1024).decode('utf-8')
+        #     fromClient2 = fromClient2.split("\n")[0]
+         
+            # print("Received from client: ", fromClient2, "\n")
+        # if not fromClient1 or not fromClient2:
+            # break
 
-        fromClient = fromClient.split("\n")[0]
-        if DEBUGMODE:
-            print("received from client: ", fromClient)
-
-        if not fromClient:
+        if not fromClient1:
             break
 
-        else:
-            parsedData = fromClient.split(",")
+        if DEBUGMODE:
+            print(fromClient1[-1], "\n")
 
-            # PaddlePosL, PaddlePosR, ballPos, score, sync
+        # assert type(fromClient1[-1]) == int
+        if type(fromClient1[-1] == "\n"):
+            print("FromClient", fromClient1)
+            
 
-            # Connection 1
-            if connection == inputList[0][0]:
-                with sync_locks[0]:
-                    syncs[0] = int(parsedData[-1])
+        # if DEBUGMODE:
+        #         print(fromClient2[-1], "\n")
+        # assert type(fromClient2[-1]) == int
 
-            # Connection 2
-            if connection == inputList[1][0]:
-                with sync_locks[1]:
-                    syncs[1] = int(parsedData[-1])
+        # if fromClient1[-1] > fromClient2[-1]:
+        #     fromClient =  fromClient2
+        # elif fromClient2[-1] > fromClient1[-1]:
+        #     fromClient =  fromClient1
+        
+        fromClient = fromClient1
 
-            if syncs[0] == 0 and syncs[1] == 0:
-                with sync_locks[0], sync_locks[1]:
-                    if DEBUGMODE:
-                        print("Both are zero")
-                    continue
-
-            elif syncs[0] > syncs[1]:
-                # Update with data from connection 2
-                fromClient += "\n"
-                with sync_locks[1]:
-                    inputList[1][0].send(fromClient.encode('utf-8'))
-
-            elif syncs[0] < syncs[1]:
-                # Update with data from connection 1
-                fromClient += "\n"
-                with sync_locks[0]:
-                    inputList[0][0].send(fromClient.encode('utf-8'))
-
-            else:
-                # Update both connections
-                fromClient += "\n"
-                with sync_locks[0], sync_locks[1]:
-                    inputList[0][0].send(fromClient.encode('utf-8'))
-                    inputList[1][0].send(fromClient.encode('utf-8'))
+        fromClient += "\n"
+      
+        if DEBUGMODE:
+            print("Sending ", fromClient, "to client")
+            inputList[1][0].send(fromClient.encode('utf-8'))
+            inputList[0][0].send(fromClient.encode('utf-8'))
 
     connection.close()
 
-ackCounter = 1
+
 while True:
 
     client, clientaddr = server.accept()
+
     if DEBUGMODE:
         print(f"Accepted connection from", clientaddr)
 
     inputList.append([client,clientaddr, len(inputList)])
-    if DEBUGMODE:
-        print("Sending First ACK")
 
-    client.send("ACK".encode('utf-8'))
-    if DEBUGMODE:
-        print("Waiting for HandShake")
 
-    acknowledgment = client.recv(1024).decode('utf-8')
-
-    if acknowledgment == "ACK":
-        if DEBUGMODE:
-            print("Received ACK", ackCounter)
-
-        if ackCounter < 3:
-
-            ackCounter += 1
     if DEBUGMODE:
         print("Sending client number: ", str(len(inputList)))
+
     toClient = client.send(str(len(inputList)).encode('utf-8'))
     
+    with input_locks[0], input_locks[1]:
 
-
-    with input_locks:
         if len(inputList) == 1:
+
             if DEBUGMODE:
                 print("Starting First Thread")
 
@@ -157,6 +122,7 @@ while True:
         if len(inputList) == 2:
             
             client_handler = threading.Thread(target=handle_client, args=(client,))
+
             client_handler.start()
             client_handler1.start()
 

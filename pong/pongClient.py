@@ -91,6 +91,8 @@ def playGame(screenWidth:int, screenHeight:int, playerPaddle:str, client:socket.
         # Your code here to send an update to the server on your paddle's information,
         # where the ball is and the current score.
         # Feel free to change when the score is updated to suit your needs/requirements
+
+        
     
         if playerPaddle == "left": 
         # Send the paddle information to the server
@@ -113,17 +115,10 @@ def playGame(screenWidth:int, screenHeight:int, playerPaddle:str, client:socket.
         seqNum += 1
 
         m = message + "\n"
+    
+        client.send(m.encode('utf-8'))  
+        # =========================================================================================
 
-        with sync_locks[0], sync_locks[1]: 
-            if sync > 2: 
-                print("Sending message to server")
-                client.send(m.encode('utf-8'))  
-                sync = 0
-
-            sync += 1
-
-
-       
 
         # =========================================================================================
 
@@ -197,15 +192,14 @@ def playGame(screenWidth:int, screenHeight:int, playerPaddle:str, client:socket.
 
         if sync > 1:
 
-            if DEBUGMODE:
-                print("sending: ", message)
-            messageToSend = message + "\n"
-            client.sendto(messageToSend.encode('utf-8'),('localhost', 5050))
+       
 
             if DEBUGMODE:
+
                 print("Waiting for Server Data with sync of ", sync )
-
+    
             fromServer = client.recv(1024).decode('utf-8')
+            sync = 0
             fromServer = fromServer.split("\n")[0]
             fromServer = fromServer.split(",")
 
@@ -229,7 +223,7 @@ def playGame(screenWidth:int, screenHeight:int, playerPaddle:str, client:socket.
             rScore = int(fromServer[5])  
           
 
-       
+        sync += 1
        
 
         # =========================================================================================
@@ -270,11 +264,11 @@ def joinServer(ip:str, port:str, errorLabel:tk.Label, app:tk.Tk) -> None:
     print("Connected to ", socket.gethostname(), " on port ", port)
 
 
-    ack = client.recv(1024).decode('utf-8')
-    if ack == "ACK":
-        if DEBUGMODE:
-            print("Received first ACK, establishing handshake")
-        client.send("ACK".encode('utf-8'))
+    # ack = client.recv(1024).decode('utf-8')
+    # if ack == "ACK":
+    #     if DEBUGMODE:
+    #         print("Received first ACK, establishing handshake")
+    #     client.send("ACK".encode('utf-8'))
 
     # 1 OR 2
     message = client.recv(1024)
