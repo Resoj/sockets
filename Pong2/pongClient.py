@@ -18,6 +18,12 @@ from assets.code.helperCode import *
 pad = ""
 DEBUGMODE = True
 sync_locks = [threading.Lock(), threading.Lock()]
+
+
+
+
+
+
 # This is the main game loop.  For the most part, you will not need to modify this.  The sections
 # where you should add to the code are marked.  Feel free to change any part of this project
 # to suit your needs.
