@@ -17,16 +17,18 @@ from assets.code.helperCode import *
 
 pad = ""
 DEBUGMODE = True
-sync_locks = [threading.Lock(), threading.Lock()]
 # This is the main game loop.  For the most part, you will not need to modify this.  The sections
 # where you should add to the code are marked.  Feel free to change any part of this project
 # to suit your needs.
-def playGame(screenWidth:int, screenHeight:int, playerPaddle:str, client:socket.socket, sync_locks:threading.Lock()) -> None:
+def playGame(screenWidth:int, screenHeight:int, playerPaddle:str, client:socket.socket) -> None:
     
+    seqNum = 0
+
+
     # Pygame inits
     pygame.mixer.pre_init(44100, -16, 2, 2048)
     pygame.init()
-    seqNum = 0
+
     # Constants
     WHITE = (255,255,255)
     clock = pygame.time.Clock()
@@ -89,15 +91,13 @@ def playGame(screenWidth:int, screenHeight:int, playerPaddle:str, client:socket.
         # where the ball is and the current score.
         # Feel free to change when the score is updated to suit your needs/requirements
 
-        
-    
         if playerPaddle == "left": 
 
         # Send the paddle information to the server
             paddlePosL = str(playerPaddleObj.rect.y)
             paddlePosR = str(opponentPaddleObj.rect.y)
 
-        else:
+        elif playerPaddle == "right":
 
             # Send the paddle information to the server
             paddlePosR = str(playerPaddleObj.rect.y)
@@ -117,9 +117,9 @@ def playGame(screenWidth:int, screenHeight:int, playerPaddle:str, client:socket.
 
         m = message + "\n"
 
-            
-        print("Sending Packet")
-        client.send(m.encode())  
+
+    
+        client.send(m.encode('utf-8'))  
 
         # =========================================================================================
 
@@ -191,36 +191,43 @@ def playGame(screenWidth:int, screenHeight:int, playerPaddle:str, client:socket.
         # catch up (use their info)
 
 
+
+        if DEBUGMODE and sync > 1:
+
+            print("Waiting for Server Data with sync of ", sync )
+
         if sync > 1:
-        
-            if DEBUGMODE:
+                # Waiting for the Server to send Data 
+            fromServer1 = client.recv(1024).decode()
+            fromServer2 = client.recv(1024).decode()
 
-                print("Waiting for Server Data with sync of ", sync )
-    
-            # Waiting for the Server to send Data 
-            fromServer = client.recv(1024).decode()
-            if DEBUGMODE:
-                print("Recieved: ", fromServer, "\n")
+            print(fromServer1)
+            print(fromServer2)
 
+            fromServer = fromServer2.split("\n")[0]
+                # Reseting Sync
             sync = 0
 
-            # Parsing the data from the server
+                # Parsing the data from the server
             fromServer = fromServer.split("\n")[0]
             fromServer = fromServer.split(",")
 
             if DEBUGMODE:
                 print("Split Data: ", fromServer)
 
-            # Updating info with the Server Data
+                # Updating info with the Server Data
             if playerPaddle == "left":
 
+                playerPaddleObj.rect.y = int(fromServer[0])
                 opponentPaddleObj.rect.y = int(fromServer[1])
 
-            else:
+            elif playerPaddle == "right":
 
                 opponentPaddleObj.rect.y = int(fromServer[0])
+                playerPaddleObj.rect.y = int(fromServer[1])
 
-            # Updating the rest of the info
+        
+                # Updating the rest of the info
             ball.rect.x = int(fromServer[2])
             ball.rect.y = int(fromServer[3])
             lScore = int(fromServer[4])
@@ -249,14 +256,20 @@ def joinServer(ip:str, port:str, errorLabel:tk.Label, app:tk.Tk) -> None:
 
     host = "localhost"
     # host = "10.113.32.29"
-    client.connect((host, 5001))
+    client.connect((host, 5050))
 
-    clientNum = client.recv(1024)
+    # ack = client.recv(1024).decode('utf-8')
+    # if ack == "ACK":
+    #     if DEBUGMODE:
+    #         print("Received first ACK, establishing handshake")
+    #     client.send("ACK".encode('utf-8'))
 
     # 1 OR 2
-    if clientNum and DEBUGMODE:
+    message = client.recv(1024)
 
-        print("Client Number: ", clientNum.decode())
+    if message and DEBUGMODE:
+
+        print("MESSAGE: ", message.decode())
 
     else:
         errorLabel.config(text=f"Some update text. You input: IP: {ip}, Port: {port}")
@@ -266,16 +279,12 @@ def joinServer(ip:str, port:str, errorLabel:tk.Label, app:tk.Tk) -> None:
     # Close this window and start the game with the info passed to you from the server
     app.withdraw()     # Hides the window (we'll kill it later)
 
-    if int(clientNum) == 1: 
-
+    if int(message) == 1: 
         pad = "left"
-        playGame(640, 480, pad, client,sync_locks)  # User will be either left or right paddle
-
-    elif int(clientNum) == 2:
-
+        playGame(640, 480, pad, client)  # User will be either left or right paddle
+    elif int(message) == 2:
         pad = "right"
-        playGame(640, 480, pad, client,sync_locks)  # User will be either
-
+        playGame(640, 480, pad, client)  # User will be either
 
     app.quit()         # Kills the window
 
