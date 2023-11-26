@@ -253,18 +253,14 @@ def joinServer(ip:str, port:str, errorLabel:tk.Label, app:tk.Tk) -> None:
     # You don't have to use SOCK_STREAM, use what you think is best
     client = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 
-    host = "localhost"
-    # host = "10.113.32.29"
+    # host = "localhost"
+    # host = "10.113.32.29"  # Taylor's
+    host = "10.113.32.159"  # Jose's
+
     client.connect((host, 5050))
 
     print("Connected to ", socket.gethostname(), " on port ", port)
 
-
-    # ack = client.recv(1024).decode('utf-8')
-    # if ack == "ACK":
-    #     if DEBUGMODE:
-    #         print("Received first ACK, establishing handshake")
-    #     client.send("ACK".encode('utf-8'))
 
     # 1 OR 2
     message = client.recv(1024)

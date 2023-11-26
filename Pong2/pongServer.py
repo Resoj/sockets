@@ -19,8 +19,8 @@ syncs = [0,0]
 server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 
 # Hosts and Ports
-# host ="10.113.32.29"
-host = "localhost"
+host ="10.113.32.29"
+# host = "localhost"
 port = 5050
 
 # client and client address storage
