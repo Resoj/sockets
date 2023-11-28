@@ -102,31 +102,26 @@ def playGame(screenWidth:int, screenHeight:int, playerPaddle:str, client:socket.
     
         if playerPaddle == "left": 
 
-        # Send the paddle information to the server
-            paddlePosL = str(playerPaddleObj.rect.y)
-            paddlePosR = str(opponentPaddleObj.rect.y)
+            print("Sending from left")
+            paddle = str(playerPaddleObj.rect.x) + "," + str(playerPaddleObj.rect.y) + "," + str("l") + "\n"
+            ballPos = str(ball.rect.x) + "," + str(ball.rect.y) + "\n"
+            score = str(lScore) + "," + str(rScore) + "\n"
+
+            message = paddle + ballPos + score
+            client.send(message.encode("utf-8"))
 
         elif playerPaddle == "right":
 
-            # Send the paddle information to the server
-            paddlePosR = str(playerPaddleObj.rect.y)
-            paddlePosL = str(opponentPaddleObj.rect.y)
+            print("Sending from Right")
+            paddle = str(playerPaddleObj.rect.x) + "," + str(playerPaddleObj.rect.y) + "," + str("r") + "\n"
+            ballPos = str(ball.rect.x) + "," + str(ball.rect.y) + "\n"
+            score = str(lScore) + "," + str(rScore) + "\n"
 
-        # Send the ball information to the server
-        ballPos = str(ball.rect.x) + "," + str(ball.rect.y)
+            message = paddle + ballPos + score
+            client.send(message.encode("utf-8"))
 
-        # Send the score information to the server
-        score = str(lScore) + "," + str(rScore)
-        # Sending sync to the server
-        strSync = str(sync)
-        
-        message = paddlePosL + "," + paddlePosR + "," + ballPos + "," + score + "," + playerPaddle + ',' + str(seqNum) + "," + strSync  
 
-        seqNum += 1
-
-        m = message + "\n"
-    
-        client.send(m.encode('utf-8'))  
+        # client.send(m.encode('utf-8'))  
 
         # =========================================================================================
 
@@ -203,41 +198,49 @@ def playGame(screenWidth:int, screenHeight:int, playerPaddle:str, client:socket.
             if DEBUGMODE:
 
                 print("Waiting for Server Data with sync of ", sync )
+                sync = 0
     
             # Waiting for the Server to send Data 
-            fromServer = client.recv(1024).decode('utf-8')
+            data = client.recv(1024).decode('utf-8')
+           
 
-            # Reseting Sync
-            sync = 0
+            dataSplit = data.split("\n")
 
-            # Parsing the data from the server
-            fromServer = fromServer.split("\n")[0]
-            fromServer = fromServer.split(",")
+            paddlePos = dataSplit[0].split(",")
+            ballData = dataSplit[1].split(",")
+            scoreData = dataSplit[2].split(",")
 
-            if DEBUGMODE:
-                print("Split Data: ", fromServer)
 
             # Updating info with the Server Data
-            if playerPaddle == "left":
+            if paddlePos[-1] == "l":
+                
+                print("Left: ", paddlePos) 
+                print("Ball position: ", ballData)
 
-                playerPaddleObj.rect.y = int(fromServer[0])
-                opponentPaddleObj.rect.y = int(fromServer[1])
+                opponentPaddleObj.rect.y = int(paddlePos[1])
 
-            elif playerPaddle == "right":
+            elif paddlePos[-1] == "r":
+                print("Right: ", paddlePos)
+                print("Ball position: ", ballData)
 
-                opponentPaddleObj.rect.y = int(fromServer[0])
-                playerPaddleObj.rect.y = int(fromServer[1])
+                opponentPaddleObj.rect.y = int(paddlePos[1])
 
-            else: 
 
-                continue
 
-            # Updating the rest of the info
-            ball.rect.x = int(fromServer[2])
-            ball.rect.y = int(fromServer[3])
-            lScore = int(fromServer[4])
-            rScore = int(fromServer[5])  
-          
+            # THIS PART DOES NOT WORK
+            # BALL DATA IS NOT SMOOTH
+
+            if ball.rect.x > int(ballData[0]):
+                ball.rect.x = int(ballData[0])
+            if ball.rect.y > int(ballData[1]):
+                ball.rect.y = int(ballData[1])
+
+
+            if lScore < int(scoreData[0]):
+                lScore = int(scoreData[0])
+            if rScore < int(scoreData[1]):
+                rScore = int(scoreData[1])
+        
 
         sync += 1
 
@@ -259,9 +262,9 @@ def joinServer(ip:str, port:str, errorLabel:tk.Label, app:tk.Tk) -> None:
     # You don't have to use SOCK_STREAM, use what you think is best
     client = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 
-    # host = "localhost"
+    host = "localhost"
     # host = "10.113.32.29"  # Taylor's
-    host = "10.113.32.159"  # Jose's
+    #host = "10.113.32.159"  # Jose's
 
     client.connect((host, 5050))
 
