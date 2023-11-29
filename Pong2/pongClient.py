@@ -230,10 +230,7 @@ def playGame(screenWidth:int, screenHeight:int, playerPaddle:str, client:socket.
             # THIS PART DOES NOT WORK
             # BALL DATA IS NOT SMOOTH
 
-            if ball.rect.x > int(ballData[0]):
-                ball.rect.x = int(ballData[0])
-            if ball.rect.y > int(ballData[1]):
-                ball.rect.y = int(ballData[1])
+           
 
 
             if lScore < int(scoreData[0]):
